@@ -14,12 +14,11 @@
         .receipt-container {
             max-width: 800px;
             margin: auto;
-            padding: 20px;
+            padding: 30px; /* Increased padding for more space */
             border: 1px solid #e5e7eb;
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px; /* Added padding to prevent text from being too close to the edge */
         }
         .receipt-header {
             border-bottom: 2px solid #e5e7eb;
@@ -262,13 +261,20 @@
 
         function generateReceiptNumber() {
             const randomString = Math.random().toString(36).substr(2, 6).toUpperCase();
-            return `REC-${randomString}`;
+            return `#REC-${randomString}`; // Prepend # to the receipt number
+        }
+
+        function formatDate(dateString) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
         }
 
         function generateReceipt() {
             const firstName = document.getElementById('first-name').value;
             const lastName = document.getElementById('last-name').value;
             const studentName = firstName + " " + lastName;
+            const receiptDate = document.getElementById('receipt-date').value;
+            const dueDate = document.getElementById('due-date').value;
 
             // Ensure all fields are filled
             const fields = ['receipt-date', 'due-date', 'first-name', 'last-name', 'item-description', 'quantity', 'price', 'amount-paid'];
@@ -281,8 +287,8 @@
 
             // Set receipt details
             document.getElementById('receipt-number').textContent = generateReceiptNumber();
-            document.getElementById('print-receipt-date').textContent = document.getElementById('receipt-date').value;
-            document.getElementById('print-due-date').textContent = document.getElementById('due-date').value;
+            document.getElementById('print-receipt-date').textContent = formatDate(receiptDate);
+            document.getElementById('print-due-date').textContent = formatDate(dueDate);
             document.getElementById('print-student-name').textContent = studentName;
             document.getElementById('print-item-description').textContent = document.getElementById('item-description').value;
             document.getElementById('print-quantity').textContent = document.getElementById('quantity').value;
