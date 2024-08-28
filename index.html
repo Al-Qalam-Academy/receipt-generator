@@ -114,10 +114,16 @@
                 <input type="text" id="balance" name="balance" readonly
                     class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm bg-gray-100">
             </div>
-            <button type="button" onclick="generateReceipt()"
-                class="bg-blue-500 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                Generate PDF
-            </button>
+            <div class="flex space-x-4">
+                <button type="button" onclick="generateReceipt()"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Generate PDF
+                </button>
+                <button type="button" onclick="clearFields()"
+                    class="bg-red-500 text-white px-4 py-2 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
+                    Clear
+                </button>
+            </div>
         </form>
 
         <!-- Hidden Print Template -->
@@ -301,6 +307,12 @@
 
             // Generate PDF with the student's full name in the filename
             html2pdf().from(element).save(`${firstName}_${lastName}_Receipt.pdf`);
+        }
+
+        function clearFields() {
+            document.getElementById('receipt-form').reset(); // Reset all form fields
+            document.getElementById('logo-preview').src = "https://receipt-gen.shuttleapp.rs/assets/logo.png"; // Reset logo to default
+            document.getElementById('print-logo').src = "https://receipt-gen.shuttleapp.rs/assets/logo.png"; // Reset logo in receipt template
         }
     </script>
 </body>
