@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .logo {
+            max-width: 100px; /* Make logo smaller */
+        }
+        .receipt-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px; /* Added padding to prevent text from being too close to the edge */
+        }
+        .receipt-header {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .receipt-footer {
+            border-top: 2px solid #e5e7eb;
+            padding-top: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .receipt-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .receipt-table th, .receipt-table td {
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        .receipt-table th {
+            background-color: #f3f4f6;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-4xl w-full bg-white p-8 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6">Receipt Generator</h1>
+        <form id="receipt-form" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="first-name" class="block text-sm font-medium text-gray-700">Student's First Name:</label>
+                    <input type="text" id="first-name" name="firstName" required
+                        class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+                <div class="form-group">
+                    <label for="last-name" class="block text-sm font-medium text-gray-700">Student's Last Name:</label>
+                    <input type="text" id="last-name" name="lastName" required
+                        class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="logo-upload" class="block text-sm font-medium text-gray-700">Upload Logo:</label>
+                <input type="file" id="logo-upload" accept="image/*" onchange="previewLogo()"
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                <img id="logo-preview" class="logo mt-4" src="https://receipt-gen.shuttleapp.rs/assets/logo.png" alt="Default Logo">
+            </div>
+            <div class="form-group">
+                <label for="receipt-date" class="block text-sm font-medium text-gray-700">Receipt Date:</label>
+                <input type="date" id="receipt-date" name="receiptDate" required
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            <div class="form-group">
+                <label for="due-date" class="block text-sm font-medium text-gray-700">Due Date:</label>
+                <input type="date" id="due-date" name="dueDate" required
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            <div class="form-group">
+                <label for="item-description" class="block text-sm font-medium text-gray-700">Item Description:</label>
+                <input type="text" id="item-description" name="itemDescription" required
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            <div class="form-group">
+                <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" required oninput="calculateTotal()"
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            <div class="form-group">
+                <label for="price" class="block text-sm font-medium text-gray-700">Price (per item) (₦):</label>
+                <input type="number" id="price" name="price" required oninput="calculateTotal()"
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            <div class="form-group">
+                <label for="total" class="block text-sm font-medium text-gray-700">Total (₦):</label>
+                <input type="text" id="total" name="total" readonly
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm bg-gray-100">
+            </div>
+            <div class="form-group">
+                <label for="amount-paid" class="block text-sm font-medium text-gray-700">Amount Paid (₦):</label>
+                <input type="number" id="amount-paid" name="amountPaid" required oninput="calculateBalance()"
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            <div class="form-group">
+                <label for="balance" class="block text-sm font-medium text-gray-700">Balance (₦):</label>
+                <input type="text" id="balance" name="balance" readonly
+                    class="mt-1 block w-full text-gray-900 border-gray-300 rounded-md shadow-sm bg-gray-100">
+            </div>
+            <button type="button" onclick="generateReceipt()"
+                class="bg-blue-500 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Generate PDF
+            </button>
+        </form>
+
+        <!-- Hidden Print Template -->
+        <div id="js-print-template" class="hidden">
+            <div class="receipt-container">
+                <div class="mb-8 flex justify-between">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-6 pb-2 tracking-wider uppercase">Al-Qalam Nursery, Primary And College.</h2>
+                        <div class="mb-1 flex items-center">
+                            <label class="w-32 text-gray-800 block font-bold text-xs uppercase tracking-wide">Receipt No.</label>
+                            <span class="mr-4 inline-block">:</span>
+                            <div id="receipt-number"></div>
+                        </div>
+                        <div class="mb-1 flex items-center">
+                            <label class="w-32 text-gray-800 block font-bold text-xs uppercase tracking-wide">Receipt Date</label>
+                            <span class="mr-4 inline-block">:</span>
+                            <div id="print-receipt-date"></div>
+                        </div>
+                        <div class="mb-1 flex items-center">
+                            <label class="w-32 text-gray-800 block font-bold text-xs uppercase tracking-wide">Due Date</label>
+                            <span class="mr-4 inline-block">:</span>
+                            <div id="print-due-date"></div>
+                        </div>
+                    </div>
+                    <div class="pr-5">
+                        <div class="w-32 h-32 mb-1 overflow-hidden">
+                            <img id="print-logo" class="object-cover w-20 h-20" src="https://receipt-gen.shuttleapp.rs/assets/logo.png"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between mb-10">
+                    <div class="w-1/2">
+                        <label class="text-gray-800 block mb-2 font-bold text-xs uppercase tracking-wide">To:</label>
+                        <div>
+                            <div id="print-student-name"></div>
+                        </div>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="text-gray-800 block mb-2 font-bold text-xs uppercase tracking-wide">From:</label>
+                        <div>
+                            <div>Al-Qalam Nursery, Primary And College</div>
+                            <div>Malato, Ajegunle, Ita-Oluwo, Sagamu Road, Ogijo via Ikorodu</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap -mx-1 border-b py-2 items-start">
+                    <div class="flex-1 px-1">
+                        <p class="text-gray-600 uppercase tracking-wide text-xs font-bold">Description</p>
+                    </div>
+                    <div class="px-1 w-32 text-right">
+                        <p class="text-gray-600 uppercase tracking-wide text-xs font-bold">Units</p>
+                    </div>
+                    <div class="px-1 w-32 text-right">
+                        <p class="leading-none">
+                            <span class="block uppercase tracking-wide text-xs font-bold text-gray-600">Unit Price</span>
+                        </p>
+                    </div>
+                    <div class="px-1 w-32 text-right">
+                        <p class="leading-none">
+                            <span class="block uppercase tracking-wide text-xs font-bold text-gray-600">Amount</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap -mx-1 py-2 border-b">
+                    <div class="flex-1 px-1">
+                        <p class="text-gray-800" id="print-item-description"></p>
+                    </div>
+                    <div class="px-1 w-32 text-right">
+                        <p class="text-gray-800" id="print-quantity"></p>
+                    </div>
+                    <div class="px-1 w-32 text-right">
+                        <p class="text-gray-800" id="print-unit-price"></p>
+                    </div>
+                    <div class="px-1 w-32 text-right">
+                        <p class="text-gray-800" id="print-total"></p>
+                    </div>
+                </div>
+                <div class="py-2 ml-auto mt-20" style="width: 320px">
+                    <div class="flex justify-between mb-3">
+                        <div class="text-gray-800 text-right flex-1">Total</div>
+                        <div class="text-right w-40">
+                            <div class="text-gray-800 font-medium" id="print-net-total"></div>
+                        </div>
+                    </div>
+                    <div class="py-2 border-t border-b">
+                        <div class="flex justify-between">
+                            <div class="text-xl text-gray-600 text-right flex-1">Amount Paid</div>
+                            <div class="text-right w-40">
+                                <div class="text-xl text-gray-800 font-bold" id="print-amount-paid"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-2 border-t border-b">
+                        <div class="flex justify-between">
+                            <div class="text-xl text-gray-600 text-right flex-1">Balance</div>
+                            <div class="text-right w-40">
+                                <div class="text-xl text-gray-800 font-bold" id="print-balance"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function previewLogo() {
+            const file = document.getElementById('logo-upload').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logo-preview').src = e.target.result;
+                    document.getElementById('print-logo').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function calculateTotal() {
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const total = quantity * price;
+            document.getElementById('total').value = formatCurrency(total);
+            document.getElementById('print-total').textContent = formatCurrency(total);
+            calculateBalance();
+        }
+
+        function calculateBalance() {
+            const total = parseFloat(document.getElementById('total').value.replace(/[^0-9.-]+/g,"")) || 0;
+            const amountPaid = parseFloat(document.getElementById('amount-paid').value) || 0;
+            const balance = total - amountPaid;
+            document.getElementById('balance').value = formatCurrency(balance);
+            document.getElementById('print-balance').textContent = formatCurrency(balance);
+            document.getElementById('print-amount-paid').textContent = formatCurrency(amountPaid);
+        }
+
+        function formatCurrency(value) {
+            return "₦" + value.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function generateReceiptNumber() {
+            const randomString = Math.random().toString(36).substr(2, 6).toUpperCase();
+            return `REC-${randomString}`;
+        }
+
+        function generateReceipt() {
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const studentName = firstName + " " + lastName;
+
+            // Ensure all fields are filled
+            const fields = ['receipt-date', 'due-date', 'first-name', 'last-name', 'item-description', 'quantity', 'price', 'amount-paid'];
+            for (const field of fields) {
+                if (!document.getElementById(field).value) {
+                    alert('Please fill out all fields.');
+                    return;
+                }
+            }
+
+            // Set receipt details
+            document.getElementById('receipt-number').textContent = generateReceiptNumber();
+            document.getElementById('print-receipt-date').textContent = document.getElementById('receipt-date').value;
+            document.getElementById('print-due-date').textContent = document.getElementById('due-date').value;
+            document.getElementById('print-student-name').textContent = studentName;
+            document.getElementById('print-item-description').textContent = document.getElementById('item-description').value;
+            document.getElementById('print-quantity').textContent = document.getElementById('quantity').value;
+            document.getElementById('print-unit-price').textContent = formatCurrency(document.getElementById('price').value);
+            document.getElementById('print-net-total').textContent = formatCurrency(document.getElementById('total').value.replace(/[^0-9.-]+/g,""));
+
+            // Clone the receipt template for PDF generation
+            const element = document.getElementById('js-print-template').cloneNode(true);
+            element.classList.remove('hidden');
+
+            // Generate PDF with the student's full name in the filename
+            html2pdf().from(element).save(`${firstName}_${lastName}_Receipt.pdf`);
+        }
+    </script>
+</body>
+</html>
